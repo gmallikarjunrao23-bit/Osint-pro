@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Admin — OSINT PRO</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#fff;min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:20px 24px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:12px 0 16px;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;gap:12px}
+.logo{font-size:22px;font-weight:900}
+.logo .hl{background:linear-gradient(135deg,#7c3aed,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav{display:flex;gap:12px;flex-wrap:wrap}
+.nav a{color:rgba(255,255,255,0.3);text-decoration:none;font-size:13px;padding:6px 14px;border-radius:8px;transition:all .2s}
+.nav a:hover,.nav a.active{color:#fff;background:rgba(255,255,255,0.04)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:20px 0}
+.stat{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:14px;padding:18px;text-align:center}
+.stat .num{font-size:30px;font-weight:800;letter-spacing:-0.5px}
+.stat .lbl{font-size:12px;color:rgba(255,255,255,0.2);margin-top:4px}
+.card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:14px;padding:20px;margin-top:16px}
+.card h3{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;color:rgba(255,255,255,0.2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid rgba(255,255,255,0.03)}
+td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.015)}
+.status{padding:2px 10px;border-radius:100px;font-size:11px;font-weight:600}
+.status-pending{background:rgba(251,191,36,0.1);color:#fbbf24}
+.status-approved{background:rgba(16,185,129,0.1);color:#10b981}
+.status-rejected{background:rgba(239,68,68,0.1);color:#ef4444}
+.btn{display:inline-block;padding:4px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;font-family:'Inter',sans-serif;transition:all .2s}
+.btn-approve{background:rgba(16,185,129,0.12);color:#10b981}
+.btn-approve:hover{background:rgba(16,185,129,0.2)}
+.btn-reject{background:rgba(239,68,68,0.12);color:#ef4444}
+.btn-reject:hover{background:rgba(239,68,68,0.2)}
+@media(max-width:768px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <div class="logo">🔍 OSINT <span class="hl">PRO</span> <span style="font-size:11px;color:rgba(255,255,255,0.15);">Admin</span></div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+            <span style="color:rgba(255,255,255,0.1);font-size:11px;">{{ version }}</span>
+            <a href="/admin/users" style="color:rgba(255,255,255,0.25);text-decoration:none;font-size:13px;">Users</a>
+            <a href="/admin/payments" style="color:rgba(255,255,255,0.25);text-decoration:none;font-size:13px;">Payments</a>
+            <a href="/logout" style="color:rgba(255,255,255,0.15);text-decoration:none;font-size:13px;">Logout</a>
+        </div>
+    </header>
+
+    <div class="grid">
+        <div class="stat"><div class="num">{{ stats.users }}</div><div class="lbl">👥 Users</div></div>
+        <div class="stat"><div class="num">{{ stats.premium }}</div><div class="lbl">👑 Premium</div></div>
+        <div class="stat"><div class="num">{{ stats.pending }}</div><div class="lbl">⏳ Pending</div></div>
+        <div class="stat"><div class="num">₹{{ stats.revenue }}</div><div class="lbl">💰 Revenue</div></div>
+        <div class="stat"><div class="num">{{ stats.today }}</div><div class="lbl">📊 Today</div></div>
+    </div>
+
+    <div class="card">
+        <h3>📋 Recent Payments <span style="font-size:12px;color:rgba(255,255,255,0.15);">{{ payments|length }}</span></h3>
+        {% if payments %}
+        <table>
+            <thead><tr><th>User</th><th>Plan</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for p in payments %}
+            <tr>
+                <td style="font-size:12px;">{{ p.user_id[:20] }}..</td>
+                <td><span style="font-weight:600;">{{ p.tier.title() }}</span></td>
+                <td>₹{{ p.amount }}</td>
+                <td><span class="status status-{{ p.status }}">{{ p.status.title() }}</span></td>
+                <td>
+                    {% if p.status == 'pending' %}
+                    <form method="POST" action="/admin/approve/{{ p.id }}" style="display:inline;">
+                        <button class="btn btn-approve">✅ Approve</button>
+                    </form>
+                    <form method="POST" action="/admin/reject/{{ p.id }}" style="display:inline;">
+                        <button class="btn btn-reject">❌ Reject</button>
+                    </form>
+                    {% else %}
+                    <span style="color:rgba(255,255,255,0.1);font-size:11px;">{{ p.approved_at.strftime('%Y-%m-%d') if p.approved_at else '—' }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:rgba(255,255,255,0.1);text-align:center;padding:20px;">🎉 All caught up</p>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>
