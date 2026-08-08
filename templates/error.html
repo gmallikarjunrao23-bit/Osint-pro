@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Error — OSINT PRO</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{text-align:center;padding:40px}
+.card .code{font-size:72px;font-weight:900;background:linear-gradient(135deg,#7c3aed,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card h1{font-size:28px;font-weight:800;margin:12px 0 8px}
+.card p{color:rgba(255,255,255,0.2);font-size:16px}
+.card .btn{display:inline-block;margin-top:20px;padding:12px 32px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;text-decoration:none;font-weight:700;font-size:14px}
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="code">{{ error.split('-')[0]|trim }}</div>
+    <h1>{{ error }}</h1>
+    <p>{{ description }}</p>
+    <a href="/" class="btn">🏠 Return Home</a>
+</div>
+</body>
+</html>
