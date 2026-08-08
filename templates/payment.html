@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>OSINT PRO — Payment</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#fff;min-height:100vh}
+.container{max-width:700px;margin:0 auto;padding:20px 24px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:12px 0 16px;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;gap:12px}
+.logo{font-size:22px;font-weight:900;text-decoration:none;color:#fff}
+.logo .hl{background:linear-gradient(135deg,#7c3aed,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:28px;margin-top:20px}
+.card h2{font-size:20px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.upi-box{background:rgba(124,58,237,0.04);border:1px solid rgba(124,58,237,0.08);border-radius:12px;padding:16px 20px;margin-bottom:16px;text-align:center}
+.upi-box .upi{font-size:20px;font-weight:800;color:#a78bfa;font-family:monospace;letter-spacing:1px}
+.upi-box .bank{color:rgba(255,255,255,0.2);font-size:13px;margin-top:4px}
+.tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.tier-box{cursor:pointer;border:2px solid rgba(255,255,255,0.04);border-radius:12px;padding:14px;background:rgba(255,255,255,0.02);text-align:center;transition:all .2s}
+.tier-box:hover{border-color:rgba(124,58,237,0.15);background:rgba(124,58,237,0.03)}
+.tier-box.selected{border-color:#7c3aed;background:rgba(124,58,237,0.05)}
+.tier-box .icon{font-size:24px}
+.tier-box .name{font-weight:700;font-size:15px;margin-top:4px}
+.tier-box .price{color:rgba(255,255,255,0.25);font-size:13px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:4px;font-weight:500}
+.form-group input{width:100%;padding:12px 16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;color:#fff;font-size:14px;outline:none;font-family:'Inter',sans-serif}
+.form-group input:focus{border-color:rgba(124,58,237,0.3)}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all .3s;font-family:'Inter',sans-serif}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,0.2)}
+.flash{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.1);border-radius:12px;padding:10px 14px;color:#ef4444;margin-bottom:16px;text-align:center;font-size:14px}
+.flash.success{background:rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.1);color:#10b981}
+.steps{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.step{flex:1;min-width:100px;padding:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:10px;text-align:center;font-size:12px;color:rgba(255,255,255,0.25)}
+.step .num{display:block;font-size:18px;font-weight:800;color:#a78bfa;margin-bottom:2px}
+.step.active{border-color:rgba(124,58,237,0.2);background:rgba(124,58,237,0.03)}
+.step.active .num{color:#7c3aed}
+@media(max-width:768px){.container{padding:16px}}
+</style>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <a href="/" class="logo">🔍 OSINT <span class="hl">PRO</span></a>
+        <a href="/profile" style="color:rgba(255,255,255,0.2);text-decoration:none;font-size:13px;">← Back</a>
+    </header>
+
+    <div class="card">
+        <h2>💳 Upgrade Plan</h2>
+        
+        <div class="steps">
+            <div class="step active"><span class="num">1</span> Choose Plan</div>
+            <div class="step"><span class="num">2</span> Pay via UPI</div>
+            <div class="step"><span class="num">3</span> Submit Proof</div>
+        </div>
+
+        {% with msgs = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in msgs %}
+                <div class="flash {{ 'success' if cat == 'success' else '' }}">{{ msg }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <div class="upi-box">
+            <div style="font-size:13px;color:rgba(255,255,255,0.2);">💳 Scan & Pay</div>
+            <div class="upi">{{ upi_id }}</div>
+            <div class="bank">🏦 {{ bank }}</div>
+        </div>
+
+        <form method="POST" action="/submit_payment">
+            <input type="hidden" name="tier" id="tierInput" value="premium">
+            
+            <div class="tier-grid">
+                {% for key, t in tiers.items() %}
+                    {% if key != 'free' %}
+                        <div onclick="selectTier('{{ key }}')" class="tier-box" id="tier-{{ key }}">
+                            <div class="icon">{{ t.badge }}</div>
+                            <div class="name">{{ t.name }}</div>
+                            <div class="price">₹{{ t.price }}/mo</div>
+                            <div style="font-size:10px;color:rgba(255,255,255,0.15);margin-top:4px;">{{ t.desc }}</div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="form-group"><label>📝 Transaction ID (from UPI app)</label><input type="text" name="transaction_id" placeholder="e.g. 1234567890" required></div>
+            
+            <button type="submit" class="btn">✅ Submit Payment</button>
+        </form>
+
+        <div style="margin-top:16px;text-align:center;font-size:12px;color:rgba(255,255,255,0.1);">
+            🔒 Verification takes 5-30 minutes. You'll be notified via email.
+        </div>
+    </div>
+</div>
+
+<script>
+function selectTier(tier){
+    document.getElementById('tierInput').value = tier;
+    document.querySelectorAll('.tier-box').forEach(el => el.classList.remove('selected'));
+    document.getElementById('tier-' + tier).classList.add('selected');
+}
+// Default select premium
+document.getElementById('tier-premium').classList.add('selected');
+</script>
+</body>
+</html>
