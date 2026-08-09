@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OSINT 100X — Leak Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:#0b0b12;color:#e8e8f0;display:flex;min-height:100vh}
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:10px}
+        .sidebar{width:260px;background:#111118;border-right:1px solid #1e1e2a;display:flex;flex-direction:column;height:100vh;position:sticky;top:0;flex-shrink:0;padding:24px 16px}
+        .sidebar-brand{display:flex;align-items:center;gap:12px;padding:0 8px 24px 8px;border-bottom:1px solid #1e1e2a;margin-bottom:24px}
+        .sidebar-brand .logo-icon{font-size:28px}
+        .sidebar-brand .logo-text{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+        .sidebar-brand .logo-text span{background:linear-gradient(135deg,#7c3aed,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:4px}
+        .sidebar-nav .nav-label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:rgba(255,255,255,0.15);padding:8px 12px;font-weight:600}
+        .sidebar-nav a{display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:12px;color:rgba(255,255,255,0.4);text-decoration:none;font-size:14px;font-weight:500;transition:all 0.2s}
+        .sidebar-nav a:hover{background:rgba(124,58,237,0.06);color:#fff}
+        .sidebar-nav a.active{background:rgba(124,58,237,0.10);color:#a78bfa}
+        .sidebar-nav a i{width:20px;font-size:16px;text-align:center}
+        .sidebar-nav a .badge{margin-left:auto;background:rgba(124,58,237,0.15);color:#a78bfa;font-size:10px;font-weight:700;padding:2px 10px;border-radius:100px}
+        .sidebar-footer{border-top:1px solid #1e1e2a;padding-top:16px;margin-top:8px}
+        .sidebar-footer .user-card{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:12px}
+        .sidebar-footer .user-card:hover{background:rgba(255,255,255,0.03)}
+        .sidebar-footer .user-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
+        .sidebar-footer .user-info{flex:1;min-width:0}
+        .sidebar-footer .user-info .name{font-size:14px;font-weight:600;color:#e8e8f0}
+        .sidebar-footer .user-info .email{font-size:12px;color:rgba(255,255,255,0.25);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .main{flex:1;padding:28px 36px 36px 36px;overflow-y:auto;height:100vh}
+        .main-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:16px}
+        .main-header h1{font-size:24px;font-weight:700;letter-spacing:-0.3px}
+        .main-header h1 span{color:rgba(255,255,255,0.3);font-weight:400}
+        .main-header .actions{display:flex;gap:12px;align-items:center}
+        .theme-toggle{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px 12px;color:rgba(255,255,255,0.4);cursor:pointer;transition:all 0.2s;font-size:14px}
+        .theme-toggle:hover{background:rgba(255,255,255,0.06);color:#fff}
+        .btn-primary{background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;border:none;padding:8px 20px;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.2s;font-size:14px}
+        .btn-primary:hover{transform:scale(1.03);box-shadow:0 8px 30px rgba(124,58,237,0.2)}
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+        .stat-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:16px;padding:20px 24px;transition:all 0.2s}
+        .stat-card:hover{border-color:rgba(124,58,237,0.08);background:rgba(255,255,255,0.03)}
+        .stat-card .stat-label{font-size:12px;font-weight:500;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px}
+        .stat-card .stat-value{font-size:28px;font-weight:800;margin-top:4px;letter-spacing:-0.5px}
+        .stat-card .stat-sub{font-size:12px;color:rgba(255,255,255,0.2);margin-top:4px}
+        .content-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:16px;padding:24px;margin-bottom:24px}
+        .content-card .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+        .content-card .card-header h3{font-size:16px;font-weight:600}
+        .content-card .card-header .action-link{color:#a78bfa;text-decoration:none;font-size:13px;font-weight:500}
+        .content-card .card-header .action-link:hover{text-decoration:underline}
+        .table-wrap{overflow-x:auto}
+        table{width:100%;border-collapse:collapse;font-size:14px}
+        th{text-align:left;padding:10px 12px;color:rgba(255,255,255,0.2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid rgba(255,255,255,0.04)}
+        td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.02);color:rgba(255,255,255,0.7)}
+        td .status-badge{display:inline-block;padding:2px 12px;border-radius:100px;font-size:11px;font-weight:600}
+        .status-badge.active{background:rgba(16,185,129,0.12);color:#10b981}
+        .status-badge.pending{background:rgba(251,191,36,0.12);color:#fbbf24}
+        .search-box{display:flex;gap:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:6px;margin-bottom:24px}
+        .search-box input{flex:1;padding:14px 18px;background:transparent;border:none;color:#fff;font-size:15px;outline:none;font-family:'Inter',sans-serif}
+        .search-box input::placeholder{color:rgba(255,255,255,0.2)}
+        .search-box button{padding:12px 28px;border:none;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.3s}
+        .search-box button:hover{transform:scale(1.03);box-shadow:0 8px 40px rgba(124,58,237,0.25)}
+        .hints{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+        .hint{padding:4px 14px;border-radius:100px;font-size:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);cursor:pointer;color:rgba(255,255,255,0.3);transition:all 0.2s}
+        .hint:hover{background:rgba(124,58,237,0.06);color:#fff}
+        .field{display:flex;gap:8px;padding:4px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.01)}
+        .field .lbl{color:rgba(255,255,255,0.3);min-width:80px;font-weight:500}
+        .field .val{color:rgba(255,255,255,0.7);word-break:break-all}
+        .loading{text-align:center;padding:40px 20px}
+        .spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,0.03);border-top-color:#7c3aed;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .error{background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.1);border-radius:12px;padding:14px 18px;color:#ef4444;text-align:center}
+        .footer{text-align:center;padding:24px 0 8px;border-top:1px solid rgba(255,255,255,0.02);margin-top:16px;color:rgba(255,255,255,0.06);font-size:12px}
+        .result-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:16px;padding:20px;margin-bottom:16px}
+        .result-card h3{font-size:16px;font-weight:700;margin-bottom:8px}
+        .result-card .desc{font-size:13px;color:rgba(255,255,255,0.2);margin-bottom:12px}
+        @media(max-width:768px){.sidebar{width:72px;padding:16px 8px}.sidebar-brand .logo-text,.sidebar-nav a span,.sidebar-nav .nav-label,.sidebar-footer .user-info,.sidebar-nav a .badge{display:none}.sidebar-nav a{justify-content:center;padding:12px}.sidebar-footer .user-card{justify-content:center;padding:8px}.main{padding:16px}.stats-grid{grid-template-columns:1fr 1fr}}
+        @media(max-width:480px){.stats-grid{grid-template-columns:1fr}.main-header{flex-direction:column;align-items:flex-start}}
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="logo-icon">🔍</span>
+            <span class="logo-text">OSINT <span>100X</span></span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Main</div>
+            <a href="/" class="active">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" onclick="document.getElementById('searchInput').focus(); return false;">
+                <i class="fas fa-search"></i>
+                <span>Search</span>
+                <span class="badge">New</span>
+            </a>
+            <a href="/history">
+                <i class="fas fa-history"></i>
+                <span>History</span>
+            </a>
+            <div class="nav-label" style="margin-top:16px;">Account</div>
+            <a href="/profile">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#">
+                <i class="fas fa-credit-card"></i>
+                <span>Billing</span>
+                <span class="badge">Pro</span>
+            </a>
+            <div class="nav-label" style="margin-top:16px;">Support</div>
+            <a href="#">
+                <i class="fas fa-question-circle"></i>
+                <span>Help</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            {% if user %}
+            <div class="user-card">
+                <div class="user-avatar">{{ user.name[0].upper() }}</div>
+                <div class="user-info">
+                    <div class="name">{{ user.name }}</div>
+                    <div class="email">{{ user.email }}</div>
+                </div>
+            </div>
+            <a href="/logout" style="display:flex;align-items:center;gap:14px;padding:10px 14px;border-radius:12px;color:rgba(255,255,255,0.25);text-decoration:none;font-size:14px;font-weight:500;margin-top:4px;transition:all 0.2s;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+            {% else %}
+            <div style="padding:8px 12px;">
+                <a href="/login" style="color:#a78bfa;text-decoration:none;font-size:14px;font-weight:500;">Login</a>
+                <span style="color:rgba(255,255,255,0.1);margin:0 8px;">|</span>
+                <a href="/register" style="color:rgba(255,255,255,0.3);text-decoration:none;font-size:14px;">Register</a>
+            </div>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+        <div class="main-header">
+            <h1>Dashboard <span>/ Welcome{% if user %}, {{ user.name }}{% endif %}</span></h1>
+            <div class="actions">
+                <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
+                <button class="btn-primary" onclick="document.getElementById('searchInput').focus();"><i class="fas fa-plus"></i> New Search</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Searches</div>
+                <div class="stat-value" id="totalSearches">0</div>
+                <div class="stat-sub">↑ 12% from last month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Records Found</div>
+                <div class="stat-value" id="totalRecords">0</div>
+                <div class="stat-sub">↑ 8% from last month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">API Calls Today</div>
+                <div class="stat-value" id="apiCalls">0</div>
+                <div class="stat-sub">Remaining: 53</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Plan</div>
+                <div class="stat-value" style="color:#a78bfa;">Pro</div>
+                <div class="stat-sub">Renews in 12 days</div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Enter phone, email, username, or domain..." autofocus>
+            <button onclick="performSearch()">🔍 SEARCH</button>
+        </div>
+        <div class="hints">
+            <span class="hint" onclick="setQuery('919494850232')">📱 Phone</span>
+            <span class="hint" onclick="setQuery('john@gmail.com')">✉️ Email</span>
+            <span class="hint" onclick="setQuery('@john_doe')">👤 Username</span>
+            <span class="hint" onclick="setQuery('example.com')">🌐 Domain</span>
+            <span class="hint" onclick="setQuery('anything')">🎯 Any</span>
+        </div>
+
+        <div id="loading" class="loading" style="display:none;"><div class="spinner"></div><p>⏳ Scanning 500+ databases...</p></div>
+        <div id="error" class="error" style="display:none;"></div>
+        <div id="results"></div>
+
+        <!-- Recent Activity -->
+        <div class="content-card">
+            <div class="card-header">
+                <h3>📋 Recent Searches</h3>
+                <a href="/history" class="action-link">View all →</a>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Query</th><th>Type</th><th>Records</th><th>Status</th><th>Date</th></tr></thead>
+                    <tbody id="historyTable">
+                        <tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.1);padding:20px;">No searches yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Billing / Usage -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+            <div class="content-card">
+                <div class="card-header">
+                    <h3>💳 Current Plan</h3>
+                    <a href="#" class="action-link">Upgrade →</a>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div><div style="font-size:20px;font-weight:700;color:#a78bfa;">Pro</div><div style="font-size:13px;color:rgba(255,255,255,0.2);">₹299 / month</div></div>
+                    <div style="text-align:right;"><div style="font-size:13px;color:rgba(255,255,255,0.3);">Renews on</div><div style="font-size:14px;font-weight:600;">Aug 21, 2026</div></div>
+                </div>
+                <div style="margin-top:12px;background:rgba(255,255,255,0.02);border-radius:10px;padding:12px;">
+                    <div style="display:flex;justify-content:space-between;font-size:13px;">
+                        <span style="color:rgba(255,255,255,0.3);">Searches used</span>
+                        <span><strong id="searchesUsed">0</strong> / 100</span>
+                    </div>
+                    <div style="width:100%;height:4px;background:rgba(255,255,255,0.04);border-radius:100px;margin-top:6px;">
+                        <div id="progressBar" style="width:0%;height:4px;background:linear-gradient(90deg,#7c3aed,#06b6d4);border-radius:100px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-card">
+                <div class="card-header"><h3>📊 Quick Stats</h3></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="background:rgba(255,255,255,0.02);border-radius:10px;padding:14px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;" id="quickTotal">0</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.2);">Total API Calls</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.02);border-radius:10px;padding:14px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;" id="quickRecords">0</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.2);">Records Found</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">Powered by <span style="color:rgba(167,139,250,0.3);">@DEVILHASHJ</span> • 100X ULTIMATE</div>
+    </main>
+
+    <script>
+        let historyData = [];
+
+        function setQuery(v){ document.getElementById('searchInput').value = v; performSearch(); }
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e){ if(e.key === 'Enter') performSearch(); });
+
+        function performSearch(){
+            const q = document.getElementById('searchInput').value.trim();
+            if(!q) return;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('totalSearches').textContent = '...';
+            document.getElementById('totalRecords').textContent = '...';
+            document.getElementById('apiCalls').textContent = '...';
+            document.getElementById('searchesUsed').textContent = '...';
+
+            fetch('/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: q })
+            })
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('loading').style.display = 'none';
+                if(d.error){
+                    document.getElementById('error').innerHTML = '❌ ' + d.error;
+                    document.getElementById('error').style.display = 'block';
+                    return;
+                }
+                document.getElementById('totalSearches').textContent = d.total_sources || 0;
+                document.getElementById('totalRecords').textContent = d.total_records || 0;
+                document.getElementById('apiCalls').textContent = d.response_time ? '1' : '0';
+                document.getElementById('searchesUsed').textContent = d.total_records || 0;
+                document.getElementById('quickTotal').textContent = d.total_sources || 0;
+                document.getElementById('quickRecords').textContent = d.total_records || 0;
+                const pct = Math.min((d.total_records || 0) / 100 * 100, 100);
+                document.getElementById('progressBar').style.width = pct + '%';
+
+                let html = '<div class="result-card"><h3>🎯 Results for <span style="color:#7c3aed;">' + esc(d.query) + '</span></h3><div style="font-size:13px;color:rgba(255,255,255,0.2);">Type: ' + d.type.toUpperCase() + ' • ' + d.response_time + 'ms • ' + d.timestamp + '</div></div>';
+                if(d.sources && d.sources.length){
+                    d.sources.forEach(function(s){
+                        html += '<div class="result-card"><h3>' + (s.platform_emoji || '📢') + ' ' + esc(s.title) + '</h3>';
+                        if(s.description) html += '<div class="desc">' + esc(s.description) + '</div>';
+                        s.fields.forEach(function(f){
+                            html += '<div class="field"><span class="lbl">' + f.emoji + ' ' + esc(f.label) + '</span><span class="val">' + esc(f.value) + '</span></div>';
+                        });
+                        html += '</div>';
+                    });
+                } else {
+                    html += '<div class="result-card" style="text-align:center;padding:40px;"><span style="font-size:48px;">🛡️</span><p style="color:rgba(255,255,255,0.2);margin-top:8px;">No records found. Clean result.</p></div>';
+                }
+                document.getElementById('results').innerHTML = html;
+
+                // Add to history
+                historyData.unshift({ query: d.query, type: d.type, records: d.total_records || 0, timestamp: d.timestamp });
+                renderHistory();
+            })
+            .catch(function(e){
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').innerHTML = '❌ ' + e.message;
+                document.getElementById('error').style.display = 'block';
+            });
+        }
+
+        function renderHistory(){
+            const tbody = document.getElementById('historyTable');
+            if(!historyData.length){
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.1);padding:20px;">No searches yet</td></tr>';
+                return;
+            }
+            let html = '';
+            historyData.slice(0, 5).forEach(function(h){
+                const status = h.records > 0 ? '<span class="status-badge active">Found</span>' : '<span class="status-badge pending">No Results</span>';
+                html += '<tr><td><code style="background:rgba(255,255,255,0.03);padding:2px 8px;border-radius:4px;font-size:12px;">' + esc(h.query) + '</code></td><td>' + h.type + '</td><td>' + h.records + '</td><td>' + status + '</td><td style="color:rgba(255,255,255,0.2);font-size:12px;">' + (h.timestamp || 'Just now') + '</td></tr>';
+            });
+            tbody.innerHTML = html;
+        }
+
+        function esc(t){ if(!t) return ''; var d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('click', function(){
+            document.body.classList.toggle('light-theme');
+            const icon = this.querySelector('i');
+            if(document.body.classList.contains('light-theme')){
+                icon.className = 'fas fa-sun';
+                document.body.style.background = '#f0f0f8';
+                document.body.style.color = '#0b0b12';
+                document.querySelector('.sidebar').style.background = '#ffffff';
+                document.querySelector('.sidebar').style.borderColor = '#e8e8f0';
+                document.querySelectorAll('.stat-card, .content-card, .result-card').forEach(el => {
+                    el.style.background = 'rgba(0,0,0,0.02)';
+                    el.style.borderColor = 'rgba(0,0,0,0.04)';
+                });
+            } else {
+                icon.className = 'fas fa-moon';
+                document.body.style.background = '#0b0b12';
+                document.body.style.color = '#e8e8f0';
+                document.querySelector('.sidebar').style.background = '#111118';
+                document.querySelector('.sidebar').style.borderColor = '#1e1e2a';
+                document.querySelectorAll('.stat-card, .content-card, .result-card').forEach(el => {
+                    el.style.background = 'rgba(255,255,255,0.02)';
+                    el.style.borderColor = 'rgba(255,255,255,0.04)';
+                });
+            }
+        });
+
+        // Load history from server
+        fetch('/history')
+            .then(r => r.json())
+            .then(d => {
+                if(d.history){
+                    historyData = d.history;
+                    renderHistory();
+                }
+            })
+            .catch(() => {});
+    </script>
+</body>
+  </html>
